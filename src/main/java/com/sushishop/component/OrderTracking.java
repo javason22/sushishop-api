@@ -1,9 +1,13 @@
 package com.sushishop.component;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import com.hazelcast.core.HazelcastInstance;
+
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class OrderTracking {
@@ -13,22 +17,28 @@ public class OrderTracking {
      * be only done in memory.
      * 
      */
-    private final Map<Long, OrderTrackingItem> orderTimeMap = new ConcurrentHashMap<>();
+    //private final Map<Long, OrderTrackingItem> orderTimeMap = new ConcurrentHashMap<>();
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
 
     public void trackOrderTime(Long orderId) {
 
+        Map<Long, OrderTrackingItem> orderTimeMap = hazelcastInstance.getMap("tracking");
+
         if(!orderTimeMap.containsKey(orderId)){
-            OrderTrackingItem item = new OrderTrackingItem();
-            item.setOrderId(orderId);
-            item.setLastTrackTime(System.currentTimeMillis());
-            item.setTimeSpent(0L);
+            OrderTrackingItem item = new OrderTrackingItem(
+                orderId, System.currentTimeMillis(), 0L);
             orderTimeMap.put(orderId, item);
         }else{
             Long currentTime = System.currentTimeMillis();
             Long timeSpent = orderTimeMap.get(orderId).getTimeSpent();
             timeSpent += (currentTime - orderTimeMap.get(orderId).getLastTrackTime());
-            orderTimeMap.get(orderId).setTimeSpent(timeSpent);
-            orderTimeMap.get(orderId).setLastTrackTime(currentTime);
+
+            OrderTrackingItem item = orderTimeMap.get(orderId);
+            item.setTimeSpent(timeSpent);
+            item.setLastTrackTime(currentTime);
+            // put it back to cache
+            orderTimeMap.put(orderId, item);
 
             //Long timeSpent = (System.currentTimeMillis() - orderTimeMap.get(orderId).getStartTime()) / 1000;
             //orderTimeMap.get(orderId).setTimeSpent(timeSpent);
@@ -37,10 +47,21 @@ public class OrderTracking {
 
 
     public void resumeTracking(Long orderId){
-        orderTimeMap.get(orderId).setLastTrackTime(System.currentTimeMillis());
+        Map<Long, OrderTrackingItem> orderTimeMap = hazelcastInstance.getMap("tracking");
+        OrderTrackingItem item = orderTimeMap.get(orderId);
+        item.setLastTrackTime(System.currentTimeMillis());
+        orderTimeMap.put(orderId, item);
     }
 
     public Long getTimeSpent(Long orderId) {
+        Map<Long, OrderTrackingItem> orderTimeMap = hazelcastInstance.getMap("tracking");
         return orderTimeMap.get(orderId).getTimeSpent() / 1000;
+    }
+
+    @PostConstruct
+    public void addShutdownHook() {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            hazelcastInstance.shutdown();
+        }));
     }
 }

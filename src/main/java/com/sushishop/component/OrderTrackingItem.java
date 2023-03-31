@@ -7,6 +7,12 @@ public class OrderTrackingItem {
 
     private Long timeSpent;
 
+    public OrderTrackingItem(Long orderId, Long lastTrackTime, Long timeSpent) {
+        this.orderId = orderId;
+        this.lastTrackTime = lastTrackTime;
+        this.timeSpent = timeSpent;
+    }
+
     public Long getOrderId() {
         return orderId;
     }
