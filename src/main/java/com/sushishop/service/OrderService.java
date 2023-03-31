@@ -106,10 +106,10 @@ public class OrderService {
     }
 
     public SushiOrder cancelOrder(Long orderId) 
-    throws OrderAlreadyFinishedException, OrderAlreadyCancelledException{
+    throws OrderAlreadyFinishedException, OrderAlreadyCancelledException, OrderNotFoundException{
         // find the order
         SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
-            new EntityNotFoundException("Order not found with ID: " + orderId));
+            new OrderNotFoundException("Order not found with ID: " + orderId));
         // check if the order was finished
         if (order.getStatusId().equals(statuses.get(Constant.STATUS_FINISHED))) {
             throw new OrderAlreadyFinishedException("Cannot cancel order because the order has already been finished.");
@@ -144,7 +144,7 @@ public class OrderService {
         return statuses;
     }
 
-    public SushiOrder pauseOrder(long orderId) throws OrderNotFoundException, OrderAlreadyFinishedException{
+    public SushiOrder pauseOrder(long orderId) throws OrderNotFoundException, OrderAlreadyFinishedException, OrderAlreadyCancelledException{
         // find the order
         SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
         new OrderNotFoundException("Order not found with ID: " + orderId));
@@ -153,6 +153,11 @@ public class OrderService {
         if (order.getStatusId().equals(statuses.get(Constant.STATUS_FINISHED))) {
             throw new OrderAlreadyFinishedException("Cannot pause the order because the order has already been finished.");
         }
+        // check if the order was cancelled
+        if (order.getStatusId().equals(statuses.get(Constant.STATUS_CANCELLED))) {
+            throw new OrderAlreadyCancelledException("Cannot pause the order because the order has already been cancelled.");
+        }
+
         // update order status
         Integer pauseStatusId = statuses.get(Constant.STATUS_PAUSED);
         order.setStatusId(pauseStatusId);

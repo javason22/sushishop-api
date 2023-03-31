@@ -8,6 +8,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,17 +55,15 @@ public class SushiController {
         
     }
 
-    @PostMapping("/orders/{order_id}")
-    public ResponseEntity<?> cancelOrder(@PathVariable("order_Id") Long orderId){
+    @DeleteMapping("/orders/{order_id}")
+    public ResponseEntity<?> cancelOrder(@PathVariable("order_id") Long orderId){
 
         try {
             orderService.cancelOrder(orderId);
             return ResponseEntity.ok(new BaseResponse(BaseResponse.NORMAL_CODE, "Order cancelled"));
-        } catch (OrderAlreadyFinishedException e) {
+        } catch (OrderAlreadyFinishedException | OrderAlreadyCancelledException | OrderNotFoundException e) {
             return ResponseEntity.badRequest().body(new BaseResponse(BaseResponse.ERROR_CODE, e.getMessage()));
-        } catch (OrderAlreadyCancelledException e){
-            return ResponseEntity.badRequest().body(new BaseResponse(BaseResponse.ERROR_CODE, e.getMessage()));
-        }
+        } 
 
     }
 
@@ -93,7 +92,7 @@ public class SushiController {
         try {
             orderService.pauseOrder(orderId);
             return ResponseEntity.ok(new BaseResponse(BaseResponse.NORMAL_CODE, "Order paused"));
-        } catch (OrderNotFoundException | OrderAlreadyFinishedException e) {
+        } catch (OrderNotFoundException | OrderAlreadyFinishedException | OrderAlreadyCancelledException e) {
             return ResponseEntity.badRequest().body(new BaseResponse(BaseResponse.ERROR_CODE, e.getMessage()));
         }
         
