@@ -36,5 +36,7 @@ http://localhost:9000/api/orders/status
 Spring Boot - The web framework used  
 Maven - Dependency Management  
 H2 Database - In-memory database  
+Hazelcast - In-memory data grid  
+jackson-databind - POJO - Json conversion  
 ### License
 This project is licensed under the MIT License - see the LICENSE.md file for details.
