@@ -24,7 +24,6 @@ import com.sushishop.repository.SushiOrderRepository;
 import com.sushishop.repository.SushiRepository;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Service
