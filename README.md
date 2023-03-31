@@ -28,8 +28,8 @@ http://localhost:9000/api/orders/status
 | Endpoint | Description |
 | --- | --- |
 | `GET /api/orders/status` | Get a list of all orders |
-| `GET /api/orders/{order_id}` | Get details for a specific order |
-| `DELETE /api/orders` | Cancel an order |
+| `POST /api/orders` | Order sushi  |
+| `DELETE /api/orders/{order_id}` | Cancel an order |
 | `PUT /api/orders/{order_id}/pause` | Pause an order |
 | `PUT /api/orders/{order_id}/resume` | Resume an order |
 ## Built With
