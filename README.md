@@ -14,7 +14,6 @@ git clone https://github.com/Jasonkcwong/sushishop-api.git
 ```  
 Build the project  
 ```sh
-cd sushi-api
 mvn clean install
 ```  
 Run the application  
