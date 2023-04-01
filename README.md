@@ -14,7 +14,6 @@ git clone https://github.com/Jasonkcwong/sushishop-api.git
 ```  
 Build the project  
 ```sh
-cd sushi-api
 mvn clean install
 ```  
 Run the application  
@@ -29,13 +28,15 @@ http://localhost:9000/api/orders/status
 | Endpoint | Description |
 | --- | --- |
 | `GET /api/orders/status` | Get a list of all orders |
-| `GET /api/orders/{order_id}` | Get details for a specific order |
-| `DELETE /api/orders` | Cancel an order |
+| `POST /api/orders` | Order sushi  |
+| `DELETE /api/orders/{order_id}` | Cancel an order |
 | `PUT /api/orders/{order_id}/pause` | Pause an order |
 | `PUT /api/orders/{order_id}/resume` | Resume an order |
 ## Built With
 Spring Boot - The web framework used  
 Maven - Dependency Management  
 H2 Database - In-memory database  
+Hazelcast - In-memory data grid  
+jackson-databind - POJO - Json conversion  
 ### License
 This project is licensed under the MIT License - see the LICENSE.md file for details.
