@@ -64,6 +64,16 @@ public class CachedService {
         throw new EntityNotFoundException("Sushi not found. ID:" + id);
     }
 
+    public Sushi getSushiByName(String name){
+        for(Sushi sushi : this.getSushies()){
+            if(sushi.getName().equals(name)){
+                return sushi;
+            }
+        }
+        // not found
+        throw new EntityNotFoundException("Sushi not found. Name:" + name);
+    }
+
     public Integer getStatusIdByName(String name){
         
         Integer statusId = getStatuses().get(name);

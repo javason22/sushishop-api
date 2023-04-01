@@ -25,12 +25,13 @@ import com.sushishop.exception.OrderAlreadyCancelledException;
 import com.sushishop.exception.OrderAlreadyFinishedException;
 import com.sushishop.exception.OrderNotFoundException;
 import com.sushishop.exception.OrderNotPausedException;
-import com.sushishop.exception.SushiNotFoundException;
 import com.sushishop.response.BaseResponse;
 import com.sushishop.response.OrderResponse;
 import com.sushishop.response.StatusResponse;
 import com.sushishop.service.CachedService;
 import com.sushishop.service.OrderService;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @RestController
 @RequestMapping("api")
@@ -53,7 +54,7 @@ public class SushiController {
             order = orderService.createOrder(sushi.getName());
             //return ResponseEntity.ok(new OrderResponse(BaseResponse.NORMAL_CODE, "Order created", order));
             return ResponseEntity.status(HttpStatus.CREATED).body(new OrderResponse(BaseResponse.NORMAL_CODE, "Order created", order));
-        } catch (SushiNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.badRequest().body(new BaseResponse(BaseResponse.ERROR_CODE, e.getMessage()));
         }
         
@@ -78,14 +79,18 @@ public class SushiController {
         Map<String, List<StatusResponse>> responseMap = new HashMap<>();
         // construct the required HashMap JSON response
         for(Map.Entry<String, Integer> entry : statusMap.entrySet()){
+            //responseMap.put(entry.getKey(), new ArrayList<StatusResponse>());
+            List<StatusResponse> statusList = new ArrayList<StatusResponse>();
             for(SushiOrder order : orders){
                 if(order.getStatusId().equals(entry.getValue())){
-                    if(!responseMap.containsKey(entry.getKey())){
+                    /*if(!responseMap.containsKey(entry.getKey())){
                         responseMap.put(entry.getKey(), new ArrayList<StatusResponse>());
-                    }
-                    responseMap.get(entry.getKey()).add(new StatusResponse(order.getId(), orderTracking.getTimeSpent(order.getId())));
+                    }*/
+                    statusList.add(new StatusResponse(order.getId(), orderTracking.getTimeSpent(order.getId())));
+                    //responseMap.get(entry.getKey()).add(new StatusResponse(order.getId(), orderTracking.getTimeSpent(order.getId())));
                 }
             }
+            responseMap.put(entry.getKey(), statusList);
         }
         return ResponseEntity.ok(responseMap);
     }

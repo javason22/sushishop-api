@@ -17,9 +17,7 @@ import com.sushishop.exception.OrderAlreadyCancelledException;
 import com.sushishop.exception.OrderAlreadyFinishedException;
 import com.sushishop.exception.OrderNotFoundException;
 import com.sushishop.exception.OrderNotPausedException;
-import com.sushishop.exception.SushiNotFoundException;
 import com.sushishop.repository.SushiOrderRepository;
-import com.sushishop.repository.SushiRepository;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
@@ -28,8 +26,8 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class OrderService {
 
-    @Autowired
-    private SushiRepository sushiRepository;
+    //@Autowired
+    //private SushiRepository sushiRepository;
 
     @Autowired
     private SushiOrderRepository orderRepository;
@@ -67,10 +65,10 @@ public class OrderService {
 
             // Check in-progress orders
             for (SushiOrder order : inProgressOrders) {
-                Sushi sushi = sushiRepository.findById(order.getSushiId()).orElse(null);
+                Sushi sushi = cachedService.getSushiById(order.getSushiId());
 
                 // Check if the order is ready
-                orderTracking.trackOrderTime(order.getId());
+                orderTracking.updateOrderTime(order.getId());
                 long timeSpent = orderTracking.getTimeSpent(order.getId());
                 if (timeSpent >= sushi.getTimeToMake()) {
                     // Update order status to "finished"
@@ -81,18 +79,14 @@ public class OrderService {
         }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
-    public SushiOrder createOrder(String sushiName) throws SushiNotFoundException {
-        Sushi sushi = sushiRepository.findByName(sushiName).stream().findFirst()
-                .orElseThrow(() -> new SushiNotFoundException("Sushi not found with name: " + sushiName));
+    public SushiOrder createOrder(String sushiName) {
+        Sushi sushi = cachedService.getSushiByName(sushiName);
         
         Integer createdStatusId = cachedService.getStatusIdByName(Constant.STATUS_CREATED);
         SushiOrder order = new SushiOrder();
         order.setSushiId(sushi.getId());
         order.setStatusId(createdStatusId);
         order.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-        SushiOrder resultOrder = orderRepository.save(order);
-
-        orderTracking.trackOrderTime(resultOrder.getId());
 
         return orderRepository.save(order);
     }
