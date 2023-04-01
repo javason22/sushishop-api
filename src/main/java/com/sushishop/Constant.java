@@ -7,4 +7,6 @@ public final class Constant {
     public static final String STATUS_PAUSED = "paused";
     public static final String STATUS_FINISHED = "finished";
     public static final String STATUS_CANCELLED = "cancelled";
+
+    public static final int MAX_CHEF = 3;
 }

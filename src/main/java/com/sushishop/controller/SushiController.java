@@ -29,6 +29,7 @@ import com.sushishop.exception.SushiNotFoundException;
 import com.sushishop.response.BaseResponse;
 import com.sushishop.response.OrderResponse;
 import com.sushishop.response.StatusResponse;
+import com.sushishop.service.CachedService;
 import com.sushishop.service.OrderService;
 
 @RestController
@@ -40,6 +41,9 @@ public class SushiController {
 
     @Autowired
     private OrderTracking orderTracking;
+
+    @Autowired
+    private CachedService cachedService;
 
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
@@ -70,7 +74,7 @@ public class SushiController {
     @GetMapping("/orders/status")
     public ResponseEntity<?> listOrders(){
         List<SushiOrder> orders = orderService.listOrders();
-        Map<String, Integer> statusMap = orderService.getStatusMap();
+        Map<String, Integer> statusMap = cachedService.getStatuses();
         Map<String, List<StatusResponse>> responseMap = new HashMap<>();
         // construct the required HashMap JSON response
         for(Map.Entry<String, Integer> entry : statusMap.entrySet()){
