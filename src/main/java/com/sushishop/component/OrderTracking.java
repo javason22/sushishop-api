@@ -60,7 +60,7 @@ public class OrderTracking {
      * 
      * @param orderId
      */
-    public void resumeTracking(Long orderId){
+    public void updateLastTrackTime(Long orderId){
         Map<Long, OrderTrackingItem> orderTimeMap = hazelcastInstance.getMap("tracking");
         OrderTrackingItem item = orderTimeMap.get(orderId);
         item.setLastTrackTime(System.currentTimeMillis());

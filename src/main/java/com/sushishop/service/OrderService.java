@@ -64,16 +64,24 @@ public class OrderService {
             }
 
             // Check in-progress orders
-            for (SushiOrder order : inProgressOrders) {
-                Sushi sushi = cachedService.getSushiById(order.getSushiId());
-
-                // Check if the order is ready
-                orderTracking.updateOrderTime(order.getId());
-                long timeSpent = orderTracking.getTimeSpent(order.getId());
-                if (timeSpent >= sushi.getTimeToMake()) {
-                    // Update order status to "finished"
-                    order.setStatusId(cachedService.getStatusIdByName(Constant.STATUS_FINISHED));
-                    orderRepository.save(order);
+            //for (SushiOrder order : inProgressOrders) {
+            for (int i = 0 ; i < inProgressOrders.size() ; i++){
+                SushiOrder order = inProgressOrders.get(i);
+                if(i < Constant.MAX_CHEF){
+                    Sushi sushi = cachedService.getSushiById(order.getSushiId());
+                    // update track time and accumulate time spent
+                    orderTracking.updateOrderTime(order.getId());
+                    // Check if the order is ready
+                    long timeSpent = orderTracking.getTimeSpent(order.getId());
+                    if (timeSpent >= sushi.getTimeToMake()) {
+                        // Update order status to "finished"
+                        order.setStatusId(cachedService.getStatusIdByName(Constant.STATUS_FINISHED));
+                        orderRepository.save(order);
+                    }
+                }else{
+                    // more than MAX_CHEF means there are in-progress orders were resumed from paused
+                    // only update the last track time but not the time spent
+                    orderTracking.updateLastTrackTime(order.getId());
                 }
             }
         }, 0, 100, TimeUnit.MILLISECONDS);
@@ -146,7 +154,7 @@ public class OrderService {
         }
         
         // notify the tracking component to resume by updating the timer
-        orderTracking.resumeTracking(orderId);
+        orderTracking.updateLastTrackTime(orderId);
         // update order status
         Integer inProgressStatusId = cachedService.getStatusIdByName(Constant.STATUS_IN_PROGRESS);
         order.setStatusId(inProgressStatusId);
