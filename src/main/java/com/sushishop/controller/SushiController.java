@@ -1,6 +1,7 @@
 package com.sushishop.controller;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.sushishop.component.OrderTracking;
+import com.sushishop.Constant;
 import com.sushishop.entity.Sushi;
 import com.sushishop.entity.SushiOrder;
 import com.sushishop.exception.OrderAlreadyCancelledException;
@@ -27,8 +28,7 @@ import com.sushishop.exception.OrderNotFoundException;
 import com.sushishop.exception.OrderNotPausedException;
 import com.sushishop.response.BaseResponse;
 import com.sushishop.response.OrderResponse;
-import com.sushishop.response.StatusResponse;
-import com.sushishop.service.CachedService;
+import com.sushishop.scheduler.OrderStatus;
 import com.sushishop.service.OrderService;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -39,12 +39,6 @@ public class SushiController {
     
     @Autowired
     private OrderService orderService;
-
-    @Autowired
-    private OrderTracking orderTracking;
-
-    @Autowired
-    private CachedService cachedService;
 
     @PostMapping("/orders")
     @ResponseStatus(HttpStatus.CREATED)
@@ -74,23 +68,20 @@ public class SushiController {
 
     @GetMapping("/orders/status")
     public ResponseEntity<?> listOrders(){
-        List<SushiOrder> orders = orderService.listOrders();
-        Map<String, Integer> statusMap = cachedService.getStatuses();
-        Map<String, List<StatusResponse>> responseMap = new HashMap<>();
-        // construct the required HashMap JSON response
-        for(Map.Entry<String, Integer> entry : statusMap.entrySet()){
-            //responseMap.put(entry.getKey(), new ArrayList<StatusResponse>());
-            List<StatusResponse> statusList = new ArrayList<StatusResponse>();
-            for(SushiOrder order : orders){
-                if(order.getStatusId().equals(entry.getValue())){
-                    /*if(!responseMap.containsKey(entry.getKey())){
-                        responseMap.put(entry.getKey(), new ArrayList<StatusResponse>());
-                    }*/
-                    statusList.add(new StatusResponse(order.getId(), orderTracking.getTimeSpent(order.getId())));
-                    //responseMap.get(entry.getKey()).add(new StatusResponse(order.getId(), orderTracking.getTimeSpent(order.getId())));
-                }
-            }
-            responseMap.put(entry.getKey(), statusList);
+        Collection<OrderStatus> orders = orderService.listOrders();
+        Map<String, List<Map<String, Long>>> responseMap = new HashMap<>();
+        // initialize all status map
+        responseMap.put(Constant.STATUS_CREATED, new ArrayList<Map<String, Long>>());
+        responseMap.put(Constant.STATUS_IN_PROGRESS, new ArrayList<Map<String, Long>>());
+        responseMap.put(Constant.STATUS_FINISHED, new ArrayList<Map<String, Long>>());
+        responseMap.put(Constant.STATUS_PAUSED, new ArrayList<Map<String, Long>>());
+        responseMap.put(Constant.STATUS_CANCELLED, new ArrayList<Map<String, Long>>());
+        // put all the order into the map
+        for(OrderStatus orderStatus : orders){
+            Map<String, Long> map = new HashMap<String, Long>();
+            map.put("orderId", orderStatus.getOrderId());
+            map.put("timeSpent", orderStatus.getTimeSpent() / 1000);
+            responseMap.get(orderStatus.getStatus()).add(map);
         }
         return ResponseEntity.ok(responseMap);
     }
