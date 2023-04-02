@@ -1,7 +1,7 @@
 # sushishop-api
 A sushi Shop Restful APIs made by Spring boot  
 ## Sushi API  
-This is a RESTful API for a Sushi ordering system built with Spring Boot. It provides endpoints for creating orders, updating orders, and retrieving orders.
+This is a RESTful API for a Sushi ordering system built with Spring Boot. It provides endpoints for creating orders, getting orders status, cancel orders(only orders with create, in-progress, and pause status are allowed to be cancel), pause orders(only orders with create and in-progress status can be pause) and resume (only orders with pause status can be resume) orders. The program uses hazelcast scheduler to instantiate three chef to pick the orders from the queue.
 
 ## Getting Started
 ### Prerequisites
