@@ -156,7 +156,7 @@ public class OrderScheduler {
 
             logger.debug("######################## END ############################");
 
-        }, 0, 1000, TimeUnit.MILLISECONDS);
+        }, 0, Constant.SCHEDULER_INTERVAL, TimeUnit.MILLISECONDS);
     }
 
     private void updateOrderStatus(SushiOrder order){
