@@ -51,7 +51,11 @@ public class OrderService {
     public SushiOrder cancelOrder(Long orderId) 
     throws OrderAlreadyFinishedException, OrderAlreadyCancelledException, OrderNotFoundException{
         // find the order
-        SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
+        //SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
+        //    new OrderNotFoundException("Order not found with ID: " + orderId));
+
+        // modified to be Java8 compatible
+        SushiOrder order = orderRepository.findById(orderId).orElseThrow(() -> 
             new OrderNotFoundException("Order not found with ID: " + orderId));
         // check if the order was finished
         if (order.getStatusId().equals(cachedService.getStatusIdByName(Constant.STATUS_FINISHED))) {
@@ -76,8 +80,12 @@ public class OrderService {
 
     public SushiOrder pauseOrder(long orderId) throws OrderNotFoundException, OrderAlreadyFinishedException, OrderAlreadyCancelledException{
         // find the order
-        SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
-        new OrderNotFoundException("Order not found with ID: " + orderId));
+        //SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
+        //new OrderNotFoundException("Order not found with ID: " + orderId));
+        
+        // modified to be Java8 compatible
+        SushiOrder order = orderRepository.findById(orderId).orElseThrow(() -> 
+            new OrderNotFoundException("Order not found with ID: " + orderId));
         
         String status = cachedService.getStatusNameById(order.getStatusId());
         // check if the order was finished
@@ -100,8 +108,12 @@ public class OrderService {
 
     public SushiOrder resumeOrder(long orderId) throws OrderNotFoundException, OrderNotPausedException{
         // find the order
-        SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
-        new OrderNotFoundException("Order not found with ID: " + orderId));
+        //SushiOrder order = orderRepository.findById(orderId).stream().findFirst().orElseThrow(() -> 
+        //new OrderNotFoundException("Order not found with ID: " + orderId));
+
+        // modified to be Java8 compatible
+        SushiOrder order = orderRepository.findById(orderId).orElseThrow(() -> 
+            new OrderNotFoundException("Order not found with ID: " + orderId));
 
         // check if the order was in paused. Only paused order can be resumed.
         if (!order.getStatusId().equals(cachedService.getStatusIdByName(Constant.STATUS_PAUSED))) {
