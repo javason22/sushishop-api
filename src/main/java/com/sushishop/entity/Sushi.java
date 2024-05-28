@@ -1,48 +1,31 @@
 package com.sushishop.entity;
 
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Table;
+import lombok.Builder;
+import lombok.Data;
 
+@Data
+@Builder
 @Entity
 @Table(name = "sushi")
 public class Sushi {
     
     @Id
+    @Column(name = "id", nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name", nullable = false, unique = true, length = 50)
     @JsonProperty("sushi_name")
     private String name;
 
+    @Column(name = "time_to_make", nullable = false, columnDefinition = "int default 0")
     private int timeToMake;
 
-    public Long getId() {
-        return id;
+    public Sushi() {
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getTimeToMake() {
-        return timeToMake;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setTimeToMake(int timeToMake) {
-        this.timeToMake = timeToMake;
-    }
 }

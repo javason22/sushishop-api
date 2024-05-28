@@ -10,5 +10,11 @@ import com.sushishop.entity.Sushi;;
 @Repository
 public interface SushiRepository extends JpaRepository<Sushi, Long>{
 
+    /**
+     * Find sushi by name
+     *
+     * @param name
+     * @return
+     */
     List<Sushi> findByName(String name);
 }

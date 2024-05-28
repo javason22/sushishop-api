@@ -3,6 +3,7 @@ package com.sushishop.service;
 import java.sql.Timestamp;
 import java.util.Collection;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,19 +22,14 @@ import com.sushishop.scheduler.OrderStatus;
 import jakarta.transaction.Transactional;
 
 @Service
-@Transactional
+@AllArgsConstructor
 public class OrderService {
 
+    private final SushiOrderRepository orderRepository;
 
-    @Autowired
-    private SushiOrderRepository orderRepository;
+    private final CachedService cachedService;
 
-
-    @Autowired
-    private CachedService cachedService;
-
-    @Autowired
-    private HazelcastInstance hazelcastInstance;
+    private final HazelcastInstance hazelcastInstance;
     
 
     public SushiOrder createOrder(String sushiName) {

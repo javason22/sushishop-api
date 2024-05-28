@@ -9,8 +9,13 @@ import com.sushishop.entity.SushiOrder;
 
 @Repository
 public interface SushiOrderRepository extends JpaRepository<SushiOrder, Long>{
-    
 
-    public List<SushiOrder> findByStatusId(int statusId);
+    /**
+     * Find order by status id
+     *
+     * @param statusId
+     * @return
+     */
+    List<SushiOrder> findByStatusId(int statusId);
     
 }

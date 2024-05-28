@@ -10,5 +10,11 @@ import com.sushishop.entity.Status;
 @Repository
 public interface StatusRepository extends JpaRepository<Status, Long>{
 
+    /**
+     * Find status by name
+     *
+     * @param name
+     * @return List<Status>
+     */
     List<Status> findByName(String name);
 }

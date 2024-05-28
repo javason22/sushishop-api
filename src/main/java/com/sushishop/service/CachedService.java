@@ -3,6 +3,7 @@ package com.sushishop.service;
 import java.util.List;
 import java.util.Map;
 
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,16 +17,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
+@AllArgsConstructor
 public class CachedService {
- 
-    @Autowired
-    private HazelcastInstance hazelcastInstance;
 
-    @Autowired
-    private StatusRepository statusRepository;
+    private final HazelcastInstance hazelcastInstance;
 
-    @Autowired
-    private SushiRepository sushiRepository;
+    private final StatusRepository statusRepository;
+
+    private final SushiRepository sushiRepository;
 
     @PostConstruct
     public void init() {

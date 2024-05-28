@@ -1,6 +1,6 @@
 package com.sushishop;
 
-public final class Constant {
+public class Constant {
     
     // all the order statuses
     public static final String STATUS_CREATED = "created";
