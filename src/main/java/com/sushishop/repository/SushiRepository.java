@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.sushishop.entity.Sushi;;
 
 @Repository
-public interface SushiRepository extends JpaRepository<Sushi, Long>{
+public interface SushiRepository extends JpaRepository<Sushi, Integer>{
 
     /**
      * Find sushi by name

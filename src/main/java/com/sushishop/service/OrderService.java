@@ -3,6 +3,7 @@ package com.sushishop.service;
 import java.sql.Timestamp;
 import java.util.Collection;
 
+import com.sushishop.entity.Status;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,16 +31,19 @@ public class OrderService {
     private final CachedService cachedService;
 
     private final HazelcastInstance hazelcastInstance;
+
+    private final StatusService statusService;
     
 
     public SushiOrder createOrder(String sushiName) {
         Sushi sushi = cachedService.getSushiByName(sushiName);
         
-        Integer createdStatusId = cachedService.getStatusIdByName(Constant.STATUS_CREATED);
-        SushiOrder order = new SushiOrder();
-        order.setSushiId(sushi.getId());
-        order.setStatusId(createdStatusId);
-        order.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+        Status createdStatus = statusService.findByName(Constant.STATUS_CREATED);
+        assert createdStatus != null; // created status should be available
+        SushiOrder order = SushiOrder.builder()
+                .sushiId(sushi.getId())
+                .statusId(createdStatus.getId())
+                .createdAt(new Timestamp(System.currentTimeMillis())).build();
 
         return orderRepository.save(order);
     }

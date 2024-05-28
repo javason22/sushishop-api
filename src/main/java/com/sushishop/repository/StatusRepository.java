@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.sushishop.entity.Status;
 
 @Repository
-public interface StatusRepository extends JpaRepository<Status, Long>{
+public interface StatusRepository extends JpaRepository<Status, Integer>{
 
     /**
      * Find status by name
