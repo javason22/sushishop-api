@@ -1,10 +1,13 @@
 package com.sushishop.service;
 
+import com.sushishop.Constant;
 import com.sushishop.pojo.StatefulOrder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 
 @Slf4j
 @AllArgsConstructor
@@ -38,19 +41,24 @@ public class QueueService {
     }
 
     public void putOrderToProcessing(StatefulOrder order) {
-        if(redisTemplate.opsForHash().size("processing-orders") >= 3) {
+        if(redisTemplate.opsForList().size("processing-orders") >= Constant.MAX_CHEF) {
             throw new RuntimeException("Too many orders in processing");
         }
-        redisTemplate.opsForHash().put("processing-orders", order.getOrderId(), order);
+        redisTemplate.opsForList().leftPush("processing-orders", order.getOrderId(), order);
+    }
+
+    public StatefulOrder getOrderFromProcessing(int index) {
+        return (StatefulOrder)redisTemplate.opsForList().index("processing-orders", index);
     }
 
     public void removeOrderFromProcessing(Long orderId) {
-        redisTemplate.opsForHash().delete("processing-orders",
+        redisTemplate.opsForList().remove("processing-orders", 1,
                 StatefulOrder.builder().orderId(orderId).build());
     }
 
     public StatefulOrder getOrderFromProcessing(Long orderId, boolean remove) {
-        StatefulOrder order = (StatefulOrder)redisTemplate.opsForHash().get("processing-orders", orderId);
+        StatefulOrder order = (StatefulOrder)redisTemplate.opsForList().range("processing-orders", 0, -1)
+                .stream().filter(o -> ((StatefulOrder)o).getOrderId().equals(orderId)).findFirst().orElse(null);
         if(remove) {
             removeOrderFromProcessing(orderId);
         }
@@ -87,6 +95,7 @@ public class QueueService {
             log.error("Order {} not found in pausing", orderId);
             return false;
         }
+        orderFromPausing.setStartAt(Instant.now().toEpochMilli()); // reset start time
         // inject order to the beginning of the queue
         redisTemplate.opsForList().rightPush("pending-orders", orderId, orderFromPausing);
         return true;

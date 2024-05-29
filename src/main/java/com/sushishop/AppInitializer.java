@@ -24,7 +24,7 @@ public class AppInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         log.info("========= Sushi Shop started to take orders! =========");
         scheduler.schedule(() -> {
-            chefService.takeOrder();
+            chefService.run();
         }, 100, TimeUnit.MILLISECONDS);
         log.info("========= Sushi Shop finished taking orders! =========");
     }

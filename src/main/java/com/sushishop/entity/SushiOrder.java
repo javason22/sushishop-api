@@ -28,15 +28,12 @@ public class SushiOrder implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "status_id", nullable = false, columnDefinition = "int default 1")
     @ManyToOne
-    @JoinColumn(name = "status_id", referencedColumnName = "id")
+    @JoinColumn(name = "status_id", referencedColumnName = "id", nullable = false)
     private Status status;
 
-    @Column(name = "sushi_id", nullable = false, columnDefinition = "int default 1")
     @ManyToOne
-    @JoinColumn(name = "sushi_id", referencedColumnName = "id")
-    //private Integer sushiId;
+    @JoinColumn(name = "sushi_id", referencedColumnName = "id", nullable = false)
     private Sushi sushi;
 
     @Column(name = "createdat", nullable = false, columnDefinition = "timestamp default current_timestamp")

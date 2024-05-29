@@ -1,6 +1,6 @@
 # server setting
 server:
-    port: 9000
+    port: 8080
 # spring setting
 spring:
     application:
@@ -12,10 +12,15 @@ spring:
         url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
         username: sa
         password:
+    sql:
+        init:
+            platform: h2
+            schema-locations: classpath:./sql/schema.sql
+            data-locations: classpath:./sql/data.sql
     jpa:
         hibernate:
           dialect: org.hibernate.dialect.H2Dialect
-          ddl-auto: none
+          ddl-auto: update
     data:
         redis:
             host: localhost
