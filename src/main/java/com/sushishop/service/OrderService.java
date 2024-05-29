@@ -47,7 +47,7 @@ public class OrderService {
                 .status(createdStatus)
                 .createdAt(new Timestamp(System.currentTimeMillis())).build();
         order =  orderRepository.save(order); // save order to db and get id
-        // push order to pending queue
+        // push order to the pending queue
         queueService.pushOrderToPending(order.getId(), sushi.getTimeToMake());
         return order;
     }
@@ -75,9 +75,7 @@ public class OrderService {
             log.warn("Order ID {} is already cancelled", orderId);
             return false;
         }
-        Status cancelledStatus = statusService.findByName(Constant.STATUS_CANCELLED);
-        assert cancelledStatus != null; // cancelled status should be available
-        order.setStatus(cancelledStatus);
+        order.setStatus(statusService.findByName(Constant.STATUS_CANCELLED));
         orderRepository.save(order);
         return true;
     }

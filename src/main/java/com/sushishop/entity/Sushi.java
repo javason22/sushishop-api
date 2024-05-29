@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.Tolerate;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -32,6 +33,7 @@ public class Sushi implements Serializable {
     @Column(name = "time_to_make", nullable = false, columnDefinition = "int default 0")
     private int timeToMake;
 
+    @Tolerate
     public Sushi() {
     }
 

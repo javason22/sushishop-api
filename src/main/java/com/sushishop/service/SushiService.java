@@ -24,9 +24,9 @@ public class SushiService {
         return sushiList.get(0);
     }
 
-    @Cacheable(value = "sushi", key = "#id", unless = "#result == null")
+    /*@Cacheable(value = "sushi", key = "#id", unless = "#result == null")
     public Sushi getSushiById(Integer id) {
         return sushiRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Sushi not found"));
-    }
+    }*/
 }
