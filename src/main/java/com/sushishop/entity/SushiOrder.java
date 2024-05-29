@@ -6,13 +6,7 @@ import java.sql.Timestamp;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,12 +29,15 @@ public class SushiOrder implements Serializable {
     private Long id;
 
     @Column(name = "status_id", nullable = false, columnDefinition = "int default 1")
+    @ManyToOne
     @JoinColumn(name = "status_id", referencedColumnName = "id")
-    private Integer statusId;
+    private Status status;
 
     @Column(name = "sushi_id", nullable = false, columnDefinition = "int default 1")
+    @ManyToOne
     @JoinColumn(name = "sushi_id", referencedColumnName = "id")
-    private Integer sushiId;
+    //private Integer sushiId;
+    private Sushi sushi;
 
     @Column(name = "createdat", nullable = false, columnDefinition = "timestamp default current_timestamp")
     @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)

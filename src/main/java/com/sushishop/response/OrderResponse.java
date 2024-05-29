@@ -25,8 +25,8 @@ public class OrderResponse extends BaseResponse{
     public static OrderResponse from(int code, String message, SushiOrder sushiOrder) {
         Map<String, Object> order = Map.of(
                 "id", sushiOrder.getId(),
-                "statusId", sushiOrder.getId(),
-                "sushiId", sushiOrder.getSushiId(),
+                "statusId", sushiOrder.getStatus().getId(),
+                "sushiId", sushiOrder.getSushi().getId(),
                 "createdAt", sushiOrder.getCreatedAt().getTime());
 
         return new OrderResponse(code, message, order);

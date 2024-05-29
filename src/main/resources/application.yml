@@ -1,0 +1,26 @@
+# server setting
+server:
+    port: 9000
+# spring setting
+spring:
+    application:
+        name: sushi-shop
+    profiles:
+        active: dev
+    datasource:
+        driverClassName: org.h2.Driver
+        url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
+        username: sa
+        password:
+    jpa:
+        hibernate:
+          dialect: org.hibernate.dialect.H2Dialect
+          ddl-auto: none
+    data:
+        redis:
+            host: localhost
+            port: 6379
+            database: 0
+    jackson:
+        serialization:
+          indent-output: true
