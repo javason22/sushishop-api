@@ -1,23 +1,44 @@
 package com.sushishop.config;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.EventListener;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.cache.RedisCacheManager;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import redis.embedded.RedisServer;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
-import java.time.Duration;
+import java.io.IOException;
 
+@Slf4j
 @EnableCaching
 @Configuration
 public class RedisConfig {
+
+    private RedisServer redisServer;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
+
+    @PostConstruct
+    public void redisServer() {
+        try{
+            redisServer = new RedisServer(redisPort);
+            redisServer.start();
+        } catch (Exception e) {
+            log.error("Error starting redis server", e);
+        }
+    }
+
+    @PreDestroy
+    public void stopRedis() throws IOException {
+        if(redisServer != null) {
+            redisServer.stop();
+        }
+    }
 
     @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
@@ -33,31 +54,4 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    /*@EventListener
-    public void onApplicationEvent(ApplicationReadyEvent event){
-        cacheManager().getCacheNames()
-                .parallelStream()
-                .forEach(n -> cacheManager().getCache(n).clear());
-    }
-
-    @Bean
-    public RedisCacheManager cacheManager() {
-        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(5)) // set cache TTL to 5 minutes
-                .disableCachingNullValues();
-
-        return RedisCacheManager.builder(lettuceConnectionFactory())
-                .cacheDefaults(config)
-                .transactionAware()
-                .build();
-    }*/
-
-    /*@Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(connectionFactory);
-        // enable transaction support for redis so it participate Spring transaction management
-        redisTemplate.setEnableTransactionSupport(true);
-        return redisTemplate;
-    }*/
 }

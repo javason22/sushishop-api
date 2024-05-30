@@ -75,6 +75,14 @@
 			<artifactId>redisson-spring-boot-starter</artifactId>
 			<version>3.30.0</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.github.codemonstur/embedded-redis -->
+		<dependency>
+			<groupId>com.github.codemonstur</groupId>
+			<artifactId>embedded-redis</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>

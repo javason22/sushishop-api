@@ -31,3 +31,7 @@ spring:
           indent-output: true
     cache:
         type: redis
+management:
+    health:
+        redis:
+            enabled: false
