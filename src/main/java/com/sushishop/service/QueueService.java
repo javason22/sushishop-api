@@ -47,8 +47,8 @@ public class QueueService {
         redisTemplate.opsForList().leftPush("processing-orders", order.getOrderId(), order);
     }
 
-    public StatefulOrder getOrderFromProcessing(int index) {
-        return (StatefulOrder)redisTemplate.opsForList().index("processing-orders", index);
+    public StatefulOrder getOrderFromProcessing() {
+        return (StatefulOrder)redisTemplate.opsForList().rightPop("processing-orders");
     }
 
     public void removeOrderFromProcessing(Long orderId) {

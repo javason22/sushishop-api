@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -15,12 +16,21 @@ import java.time.Duration;
 @Configuration
 public class RedisConfig {
 
-    /*@Bean
+    @Bean
     public LettuceConnectionFactory lettuceConnectionFactory() {
         return new LettuceConnectionFactory();
-    }*/
+    }
 
     @Bean
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(lettuceConnectionFactory());
+        // enable transaction support for redis so it participate Spring transaction management
+        redisTemplate.setEnableTransactionSupport(true);
+        return redisTemplate;
+    }
+
+    /*@Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(5)) // set cache TTL to 5 minutes
@@ -39,5 +49,5 @@ public class RedisConfig {
         // enable transaction support for redis so it participate Spring transaction management
         redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
-    }
+    }*/
 }

@@ -26,6 +26,6 @@ public interface SushiOrderRepository extends JpaRepository<SushiOrder, Long>{
      * @param orderId
      * @param status
      */
-    @Query("update SushiOrder set status = :status where id = :orderId")
-    void updateOrderStatus(Long orderId, Status status);
+    //@Query("update SushiOrder set status = :status where id = :orderId")
+    //void updateOrderStatus(Long orderId, Status status);
 }
