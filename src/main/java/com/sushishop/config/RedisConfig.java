@@ -1,8 +1,11 @@
 package com.sushishop.config;
 
+import jakarta.annotation.PreDestroy;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -26,23 +29,30 @@ public class RedisConfig {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(lettuceConnectionFactory());
         // enable transaction support for redis so it participate Spring transaction management
-        redisTemplate.setEnableTransactionSupport(true);
+        //redisTemplate.setEnableTransactionSupport(true);
         return redisTemplate;
     }
 
-    /*@Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    /*@EventListener
+    public void onApplicationEvent(ApplicationReadyEvent event){
+        cacheManager().getCacheNames()
+                .parallelStream()
+                .forEach(n -> cacheManager().getCache(n).clear());
+    }
+
+    @Bean
+    public RedisCacheManager cacheManager() {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(5)) // set cache TTL to 5 minutes
                 .disableCachingNullValues();
 
-        return RedisCacheManager.builder(connectionFactory)
+        return RedisCacheManager.builder(lettuceConnectionFactory())
                 .cacheDefaults(config)
                 .transactionAware()
                 .build();
-    }
+    }*/
 
-    @Bean
+    /*@Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(connectionFactory);

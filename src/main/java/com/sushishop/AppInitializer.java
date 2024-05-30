@@ -1,6 +1,6 @@
 package com.sushishop;
 
-import com.sushishop.service.ChefService;
+import com.sushishop.service.ChefServiceExecutor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -18,7 +18,7 @@ public class AppInitializer implements ApplicationRunner {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3);
 
-    private final ChefService chefService;
+    private final ChefServiceExecutor chefService;
 
     @Override
     public void run(ApplicationArguments args) throws Exception {

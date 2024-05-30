@@ -92,7 +92,7 @@ public class OrderController {
                 .collect(Collectors.groupingBy(order -> order.getStatus().getName(), // group by status name
                         Collectors.mapping(order -> OrderStatusResponse.builder() // map to order status response
                                 .orderId(order.getId())
-                                .timeSpent((Instant.now().toEpochMilli() - order.getCreatedAt().getTime() / 1000)) // calculate time spent
+                                .timeSpent((Instant.now().toEpochMilli() - order.getCreatedAt().getTime()) / 1000) // calculate time spent
                                         .build(), Collectors.toList())));
         // return order response
         return ResponseEntity.ok(orderMap);

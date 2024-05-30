@@ -10,7 +10,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @Builder
-public class StatefulOrder implements Serializable {
+public class ChefOrder implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,7 +31,7 @@ public class StatefulOrder implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        StatefulOrder that = (StatefulOrder) obj;
+        ChefOrder that = (ChefOrder) obj;
         return orderId.equals(that.orderId);
     }
 

@@ -2,10 +2,13 @@ package com.sushishop.service;
 
 import com.sushishop.Constant;
 import com.sushishop.entity.SushiOrder;
-import com.sushishop.pojo.StatefulOrder;
+import com.sushishop.pojo.ChefOrder;
 import com.sushishop.repository.SushiOrderRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -23,13 +26,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Service
 @AllArgsConstructor
-public class ChefService {
+public class ChefServiceExecutor {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(Constant.MAX_CHEF);
 
     private final List<ScheduledFuture<?>> makeSushiTasks = new ArrayList<>(Constant.MAX_CHEF);
 
-    private final List<AtomicBoolean> isMakingSushi = new ArrayList<>(Constant.MAX_CHEF);
+    //private final List<AtomicBoolean> isMakingSushi = new ArrayList<>(Constant.MAX_CHEF);
 
     private final QueueService queueService;
 
@@ -40,9 +43,7 @@ public class ChefService {
     private final StatusService statusService;
 
     private void init() {
-        for(int i = 0; i < Constant.MAX_CHEF; i++) {
-            isMakingSushi.add(new AtomicBoolean(false));
-        }
+        queueService.initProcessors(Constant.MAX_CHEF);
     }
 
     public void run() {
@@ -51,40 +52,47 @@ public class ChefService {
 
         for(int i = 0; i < Constant.MAX_CHEF; i++) {
             final int index = i;
+            final Chef chef = new Chef(i, null);
             makeSushiTasks.add(scheduler.scheduleAtFixedRate(() -> {
                 RLock rLock = redissonClient.getLock("chefLock");
                 try {
-                    rLock.tryLock(1L, 10L, TimeUnit.SECONDS);
+                    rLock.tryLock(1L, 10L, TimeUnit.SECONDS); // try to acquire the lock for 10 seconds
 
                     log.info("Chef {} is checking orders", index);
-                    if (!isMakingSushi.get(index).get()) { // if this chef is not making sushi
+                    if (!chef.isWorking()) {
                         log.info("Chef {} is free", index);
                         // take order from pending queue, if any
-                        StatefulOrder order = queueService.popOrderFromPending();
-                        if (order == null) {
+                        ChefOrder order = queueService.popOrderFromPending();
+                        if (order == null) { // no order to take
                             return;
                         }
                         log.info("Chef {} is taking order {}", index, order.getOrderId());
                         order.setStartAt(Instant.now().toEpochMilli());
-                        queueService.putOrderToProcessing(order); // put order to the processing queue
+                        chef.setOrder(order);
+                        queueService.putOrderToProcessing(index, chef.getOrder()); // put order to the processing queue
                         updateOrderStatus(order.getOrderId(), Constant.STATUS_IN_PROGRESS);
-                        isMakingSushi.get(index).set(true);
-                        log.info("Chef {} is making sushi {}", index, order.getOrderId());
+                        log.info("Chef {} start to make sushi {}", index, order.getOrderId());
                     } else {
                         log.info("Chef {} is busy", index);
                         // if this chef is making sushi, update progress
-                        StatefulOrder order = queueService.getOrderFromProcessing();
-                        long now = Instant.now().toEpochMilli();
-                        order.setProgress(now - order.getStartAt()); // update progress
+                        //ChefOrder order = queueService.getOrderFromProcessing(index);
+                        //long now = Instant.now().toEpochMilli();
+                        //order.setProgress(now - order.getStartAt()); // update progress
+                        chef.process();
+                        ChefOrder order = chef.getOrder();
                         log.info("Order {} progress: {}/{}", order.getOrderId(), order.getProgress(), order.getTimeRequired());
                         // if order is completed, remove from processing queue
-                        if (order.getProgress() >= order.getTimeRequired()) {
+                        //if (order.getProgress() >= order.getTimeRequired()) {
+                        if (chef.finish()) {
                             //queueService.removeOrderFromProcessing(order.getOrderId());
+                            //updateOrderStatus(order.getOrderId(), Constant.STATUS_FINISHED);
                             updateOrderStatus(order.getOrderId(), Constant.STATUS_FINISHED);
-                            isMakingSushi.get(index).set(false); // this chef is now free
+                            queueService.putOrderToProcessing(index, ChefOrder.builder().build());
+                            //isMakingSushi.get(index).set(false); // this chef is now free
+                            chef.setOrder(null);
                             log.info("Chef {} has completed order {}", index, order.getOrderId());
                         } else {
-                            queueService.putOrderToProcessing(order); // put order back to the processing queue
+                            queueService.putOrderToProcessing(index, order); // put order back to the processing queue
                         }
                     }
                     log.info("Chef {} is done checking orders", index);
@@ -104,5 +112,35 @@ public class ChefService {
                 () -> new EntityNotFoundException("Order not found"));
         order.setStatus(statusService.findByName(status));
         sushiOrderRepository.saveAndFlush(order);
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public class Chef{
+
+        private int id;
+
+        private ChefOrder order = null;
+
+        public void process(){
+            if(order != null){
+                log.info("Chef {} is making sushi: {}", id, order.getOrderId());
+                long now = Instant.now().toEpochMilli();
+                order.setProgress(now - order.getStartAt());
+                log.info("Chef {} order progress: {}/{}", id, order.getProgress(), order.getTimeRequired());
+            }
+        }
+
+        public boolean finish(){
+            if(order != null){
+                return order.getProgress() >= order.getTimeRequired();
+            }
+            return true;
+        }
+
+        public boolean isWorking(){
+            return order != null;
+        }
     }
 }
