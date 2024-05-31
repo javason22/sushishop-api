@@ -94,8 +94,24 @@ public class OrderController {
                 .collect(Collectors.groupingBy(order -> order.getStatus().getName(), // group by status name
                         Collectors.mapping(order -> OrderStatusResponse.builder() // map to order status response
                                 .orderId(order.getOrderId())
-                                .timeSpent(order.getProgress() / 1000 )  // calculate time spent
+                                .timeSpent(order.getProgress() != null ? order.getProgress() / 1000 : 0)  // calculate time spent
                                         .build(), Collectors.toList())));
+        // add missing status
+        if(!orderMap.containsKey(Constant.STATUS_CREATED)){
+            orderMap.put(Constant.STATUS_CREATED, List.of());
+        }
+        if(!orderMap.containsKey(Constant.STATUS_IN_PROGRESS)){
+            orderMap.put(Constant.STATUS_IN_PROGRESS, List.of());
+        }
+        if(!orderMap.containsKey(Constant.STATUS_FINISHED)){
+            orderMap.put(Constant.STATUS_FINISHED, List.of());
+        }
+        if(!orderMap.containsKey(Constant.STATUS_PAUSED)){
+            orderMap.put(Constant.STATUS_PAUSED, List.of());
+        }
+        if(!orderMap.containsKey(Constant.STATUS_CANCELLED)){
+            orderMap.put(Constant.STATUS_CANCELLED, List.of());
+        }
         // return order response
         return ResponseEntity.ok(orderMap);
     }

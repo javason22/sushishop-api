@@ -89,7 +89,8 @@ public class ChefServiceExecutor {
                         // if order is completed, remove from processing queue
                         if (order.finish()) {
                             updateOrderStatus(order.getOrderId(), Constant.STATUS_FINISHED);
-                            queueService.putOrderToProcessing(index, ChefOrder.builder().build());
+                            queueService.pushOrderToFinished(order); // push order to finished queue
+                            queueService.putOrderToProcessing(index, ChefOrder.builder().build()); // reset order
                             //chef.setOrder(null);
                             chef.setWorking(false);
                             log.info("Chef {} has completed order {}", index, order.getOrderId());
@@ -104,7 +105,7 @@ public class ChefServiceExecutor {
                     rLock.unlock(); // release the lock
                 }
 
-            }, 0, 1000, TimeUnit.MILLISECONDS));
+            }, 0, Constant.SCHEDULER_INTERVAL, TimeUnit.MILLISECONDS));
         }
     }
 

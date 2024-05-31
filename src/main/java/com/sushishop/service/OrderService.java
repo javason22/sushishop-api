@@ -65,16 +65,14 @@ public class OrderService {
         }
         // check if order is already cancelled
         switch (order.getStatus().getName()) {
-            case Constant.STATUS_CANCELLED:
-                return false;
-            case Constant.STATUS_FINISHED:
+            case Constant.STATUS_CANCELLED, Constant.STATUS_FINISHED:
                 return false;
             case Constant.STATUS_CREATED:
-                queueService.removeOrderFromPending(orderId);
+                queueService.moveOrderFromPendingToCancel(orderId);
             case Constant.STATUS_IN_PROGRESS:
-                queueService.removeOrderFromProcessing(orderId);
+                queueService.moveOrderFromProcessingToCancel(orderId);
             case Constant.STATUS_PAUSED:
-                queueService.removeOrderFromPausing(orderId);
+                queueService.moveOrderFromPausingToCancel(orderId);
         }
         if(statusService.findByName(Constant.STATUS_CANCELLED).equals(order.getStatus())){
             log.warn("Order ID {} is already cancelled", orderId);
@@ -87,30 +85,21 @@ public class OrderService {
 
     public List<ChefOrder> listChefOrders(){
         // get orders
-        List<SushiOrder> orders = orderRepository.findAll();
-        // grouping
-        Map<String, List<OrderStatusResponse>> orderMap = orders.stream()
-                .collect(Collectors.groupingBy(order -> order.getStatus().getName(), // group by status name
-                        Collectors.mapping(order -> OrderStatusResponse.builder() // map to order status response
-                                .orderId(order.getId())
-                                .timeSpent(!Constant.STATUS_FINISHED.equals(order.getStatus().getName()) ?
-                                        (Instant.now().toEpochMilli() - order.getCreatedAt().getTime()) / 1000 :
-                                        order.getSushi().getTimeToMake())  // calculate time spent
-                                .build(), Collectors.toList())));
-        // set the time for each order
-        orderMap.get(Constant.STATUS_IN_PROGRESS).forEach(order -> {
-            SushiOrder sushiOrder = orders.stream().filter(o -> o.getId().equals(order.getOrderId())).findFirst().orElse(null);
-            if(sushiOrder != null){
-                order.setTimeSpent((Instant.now().toEpochMilli() - sushiOrder.getCreatedAt().getTime()) / 1000);
-            }
-        });
-        return orderMap.get(Constant.STATUS_IN_PROGRESS).stream()
-                .map(order -> ChefOrder.builder()
-                        .orderId(order.getOrderId())
-                        .progress(order.getTimeSpent())
-                        .timeRequired(order.getTimeSpent())
-                        .build())
-                .collect(Collectors.toList());
+        List<ChefOrder> pendingOrders = queueService.getPendingOrders();
+        List<ChefOrder> processingOrders = queueService.getProcessingOrders().stream().filter(o -> !o.isVoid()).collect(Collectors.toList());
+        List<ChefOrder> pausedOrders = queueService.getPausingOrders();
+        List<ChefOrder> finishedOrders = queueService.getFinishedOrders();
+        List<ChefOrder> cancelledOrders = queueService.getCancelledOrders();
+
+        pendingOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_CREATED)));
+        processingOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_IN_PROGRESS)));
+        pausedOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_PAUSED)));
+        finishedOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_FINISHED)));
+        cancelledOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_CANCELLED)));
+
+        List<ChefOrder> chefOrders = List.of(pendingOrders, processingOrders, pausedOrders, finishedOrders, cancelledOrders)
+                .stream().flatMap(List::stream).collect(Collectors.toList());
+        return chefOrders;
     }
 
     @Transactional
