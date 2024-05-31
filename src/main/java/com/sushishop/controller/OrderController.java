@@ -1,6 +1,8 @@
 package com.sushishop.controller;
 
+import com.sushishop.Constant;
 import com.sushishop.entity.SushiOrder;
+import com.sushishop.pojo.ChefOrder;
 import com.sushishop.request.OrderRequest;
 import com.sushishop.response.BaseResponse;
 import com.sushishop.response.OrderResponse;
@@ -86,13 +88,13 @@ public class OrderController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, List<OrderStatusResponse>>> getOrders(){
         // get orders
-        List<SushiOrder> orders = orderService.listOrders();
+        List<ChefOrder> orders = orderService.listChefOrders();
         // grouping
         Map<String, List<OrderStatusResponse>> orderMap = orders.stream()
                 .collect(Collectors.groupingBy(order -> order.getStatus().getName(), // group by status name
                         Collectors.mapping(order -> OrderStatusResponse.builder() // map to order status response
-                                .orderId(order.getId())
-                                .timeSpent((Instant.now().toEpochMilli() - order.getCreatedAt().getTime()) / 1000) // calculate time spent
+                                .orderId(order.getOrderId())
+                                .timeSpent(order.getProgress() / 1000 )  // calculate time spent
                                         .build(), Collectors.toList())));
         // return order response
         return ResponseEntity.ok(orderMap);

@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @AllArgsConstructor
@@ -76,8 +77,11 @@ public class QueueService {
     }
 
     public void removeOrderFromProcessing(Long orderId) {
-        redisTemplate.opsForList().remove("processing-orders", 1,
+        //redisTemplate.opsForList().remove("processing-orders", 1,
+        //        ChefOrder.builder().orderId(orderId).build());
+        long index = redisTemplate.opsForList().indexOf("processing-orders",
                 ChefOrder.builder().orderId(orderId).build());
+        redisTemplate.opsForList().set("processing-orders", index, ChefOrder.builder().build()); // reset the order
         log.info("Remove order from processing-order: {}", orderId);
         log.info("processing-orders after remove {}", redisTemplate.opsForList().range("processing-orders", 0, -1));
     }
@@ -135,6 +139,21 @@ public class QueueService {
         log.info("Move order from pausing to pending: {}", orderFromPausing);
         log.info("pending-orders after right Push {}", redisTemplate.opsForList().range("pending-orders", 0, -1));
         return true;
+    }
+
+    public List<ChefOrder> getPendingOrders() {
+        return redisTemplate.opsForList().range("pending-orders", 0, -1)
+                .stream().map(o -> (ChefOrder)o).toList();
+    }
+
+    public List<ChefOrder> getProcessingOrders() {
+        return redisTemplate.opsForList().range("processing-orders", 0, -1)
+                .stream().map(o -> (ChefOrder)o).toList();
+    }
+
+    public List<ChefOrder> getPausingOrders() {
+        return redisTemplate.opsForHash().values("pausing-orders")
+                .stream().map(o -> (ChefOrder)o).toList();
     }
 
 }

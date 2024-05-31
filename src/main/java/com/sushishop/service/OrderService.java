@@ -1,9 +1,14 @@
 package com.sushishop.service;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.sushishop.entity.Status;
+import com.sushishop.pojo.ChefOrder;
+import com.sushishop.response.OrderStatusResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -80,8 +85,32 @@ public class OrderService {
         return true;
     }
 
-    public List<SushiOrder> listOrders(){
-        return orderRepository.findAll();
+    public List<ChefOrder> listChefOrders(){
+        // get orders
+        List<SushiOrder> orders = orderRepository.findAll();
+        // grouping
+        Map<String, List<OrderStatusResponse>> orderMap = orders.stream()
+                .collect(Collectors.groupingBy(order -> order.getStatus().getName(), // group by status name
+                        Collectors.mapping(order -> OrderStatusResponse.builder() // map to order status response
+                                .orderId(order.getId())
+                                .timeSpent(!Constant.STATUS_FINISHED.equals(order.getStatus().getName()) ?
+                                        (Instant.now().toEpochMilli() - order.getCreatedAt().getTime()) / 1000 :
+                                        order.getSushi().getTimeToMake())  // calculate time spent
+                                .build(), Collectors.toList())));
+        // set the time for each order
+        orderMap.get(Constant.STATUS_IN_PROGRESS).forEach(order -> {
+            SushiOrder sushiOrder = orders.stream().filter(o -> o.getId().equals(order.getOrderId())).findFirst().orElse(null);
+            if(sushiOrder != null){
+                order.setTimeSpent((Instant.now().toEpochMilli() - sushiOrder.getCreatedAt().getTime()) / 1000);
+            }
+        });
+        return orderMap.get(Constant.STATUS_IN_PROGRESS).stream()
+                .map(order -> ChefOrder.builder()
+                        .orderId(order.getOrderId())
+                        .progress(order.getTimeSpent())
+                        .timeRequired(order.getTimeSpent())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     @Transactional

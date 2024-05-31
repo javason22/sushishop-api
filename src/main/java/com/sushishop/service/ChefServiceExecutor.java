@@ -12,6 +12,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
-@Service
+@Component
 @AllArgsConstructor
 public class ChefServiceExecutor {
 
@@ -52,7 +53,7 @@ public class ChefServiceExecutor {
 
         for(int i = 0; i < Constant.MAX_CHEF; i++) {
             final int index = i;
-            final Chef chef = new Chef(i, null);
+            final Chef chef = new Chef(i, false);
             makeSushiTasks.add(scheduler.scheduleAtFixedRate(() -> {
                 RLock rLock = redissonClient.getLock("chefLock");
                 try {
@@ -68,28 +69,29 @@ public class ChefServiceExecutor {
                         }
                         log.info("Chef {} is taking order {}", index, order.getOrderId());
                         order.setStartAt(Instant.now().toEpochMilli());
-                        chef.setOrder(order);
-                        queueService.putOrderToProcessing(index, chef.getOrder()); // put order to the processing queue
+                        //chef.setOrder(order);
+                        queueService.putOrderToProcessing(index, order); // put order to the processing queue
                         updateOrderStatus(order.getOrderId(), Constant.STATUS_IN_PROGRESS);
+                        chef.setWorking(true);
                         log.info("Chef {} start to make sushi {}", index, order.getOrderId());
                     } else {
                         log.info("Chef {} is busy", index);
                         // if this chef is making sushi, update progress
-                        //ChefOrder order = queueService.getOrderFromProcessing(index);
-                        //long now = Instant.now().toEpochMilli();
-                        //order.setProgress(now - order.getStartAt()); // update progress
-                        chef.process();
-                        ChefOrder order = chef.getOrder();
+                        ChefOrder order = queueService.getOrderFromProcessing(index);
+                        // if order is void (paused or cancelled), return
+                        if(order.isVoid()){
+                            chef.setWorking(false); // set chef to free
+                            return;
+                        }
+                        chef.process(order);
+                        //ChefOrder order = chef.getOrder();
                         log.info("Order {} progress: {}/{}", order.getOrderId(), order.getProgress(), order.getTimeRequired());
                         // if order is completed, remove from processing queue
-                        //if (order.getProgress() >= order.getTimeRequired()) {
-                        if (chef.finish()) {
-                            //queueService.removeOrderFromProcessing(order.getOrderId());
-                            //updateOrderStatus(order.getOrderId(), Constant.STATUS_FINISHED);
+                        if (order.finish()) {
                             updateOrderStatus(order.getOrderId(), Constant.STATUS_FINISHED);
                             queueService.putOrderToProcessing(index, ChefOrder.builder().build());
-                            //isMakingSushi.get(index).set(false); // this chef is now free
-                            chef.setOrder(null);
+                            //chef.setOrder(null);
+                            chef.setWorking(false);
                             log.info("Chef {} has completed order {}", index, order.getOrderId());
                         } else {
                             queueService.putOrderToProcessing(index, order); // put order back to the processing queue
@@ -121,9 +123,10 @@ public class ChefServiceExecutor {
 
         private int id;
 
-        private ChefOrder order = null;
+        //private ChefOrder order = null;
+        private boolean working;
 
-        public void process(){
+        public void process(ChefOrder order){
             if(order != null){
                 log.info("Chef {} is making sushi: {}", id, order.getOrderId());
                 long now = Instant.now().toEpochMilli();
@@ -132,15 +135,15 @@ public class ChefServiceExecutor {
             }
         }
 
-        public boolean finish(){
+        /*public boolean finish(){
             if(order != null){
                 return order.getProgress() >= order.getTimeRequired();
             }
             return true;
-        }
+        }*/
 
-        public boolean isWorking(){
+        /*public boolean isWorking(){
             return order != null;
-        }
+        }*/
     }
 }
