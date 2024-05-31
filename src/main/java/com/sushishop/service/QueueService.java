@@ -75,10 +75,14 @@ public class QueueService {
     }
 
     public void removeOrderFromProcessing(Long orderId) {
-        //redisTemplate.opsForList().remove("processing-orders", 1,
+        //long index = redisTemplate.opsForList().indexOf(Constant.CACHE_PROCESSING_ORDERS,
         //        ChefOrder.builder().orderId(orderId).build());
-        long index = redisTemplate.opsForList().indexOf(Constant.CACHE_PROCESSING_ORDERS,
-                ChefOrder.builder().orderId(orderId).build());
+        List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1);
+        long index = orders.indexOf(ChefOrder.builder().orderId(orderId).build());
+        if(index < 0){
+            log.error("Order {} not found in processing", orderId);
+            return;
+        }
         redisTemplate.opsForList().set(Constant.CACHE_PROCESSING_ORDERS, index, ChefOrder.builder().build()); // reset the order
         log.info("Remove order from processing-order: {}", orderId);
         log.info("processing-orders after remove {}", redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1));
@@ -102,14 +106,14 @@ public class QueueService {
             log.error("Order {} not found in processing", orderId);
             return false;
         }
-        redisTemplate.opsForHash().put(Constant.CACHE_PAUSED_ORDERS, orderId, orderFromProcessing);
+        redisTemplate.opsForHash().put(Constant.CACHE_PAUSED_ORDERS, String.valueOf(orderId), orderFromProcessing);
         log.info("Move order from processing to pausing: {}", orderFromProcessing);
         log.info("pausing-orders after put {}", redisTemplate.opsForHash().entries(Constant.CACHE_PAUSED_ORDERS));
         return true;
     }
 
     public ChefOrder getOrderFromPausing(Long orderId, boolean remove) {
-        ChefOrder order = (ChefOrder)redisTemplate.opsForHash().get(Constant.CACHE_PAUSED_ORDERS, orderId);
+        ChefOrder order = (ChefOrder)redisTemplate.opsForHash().get(Constant.CACHE_PAUSED_ORDERS, String.valueOf(orderId));
         if(remove) {
             removeOrderFromPausing(orderId);
         }
@@ -119,7 +123,7 @@ public class QueueService {
     }
 
     public void removeOrderFromPausing(Long orderId) {
-        redisTemplate.opsForHash().delete(Constant.CACHE_PAUSED_ORDERS, orderId);
+        redisTemplate.opsForHash().delete(Constant.CACHE_PAUSED_ORDERS, String.valueOf(orderId));
         log.info("Remove order from pausing-orders: {}", orderId);
         log.info("pausing-orders after remove {}", redisTemplate.opsForHash().entries(Constant.CACHE_PAUSED_ORDERS));
     }
@@ -133,7 +137,7 @@ public class QueueService {
         }
         orderFromPausing.setStartAt(Instant.now().toEpochMilli()); // reset start time
         // inject order to the beginning of the queue
-        redisTemplate.opsForList().rightPush(Constant.CACHE_PENDING_ORDERS, orderId, orderFromPausing);
+        redisTemplate.opsForList().rightPush(Constant.CACHE_PENDING_ORDERS, orderFromPausing);
         log.info("Move order from pausing to pending: {}", orderFromPausing);
         log.info("pending-orders after right Push {}", redisTemplate.opsForList().range(Constant.CACHE_PENDING_ORDERS, 0, -1));
         return true;

@@ -1,10 +1,12 @@
 package com.sushishop.pojo;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.sushishop.entity.Status;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -12,6 +14,8 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @Builder
+@NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ChefOrder implements Serializable {
 
     @Serial
@@ -45,10 +49,12 @@ public class ChefOrder implements Serializable {
         return orderId.hashCode();
     }
 
+    @Transient
     public boolean finish() {
         return progress >= timeRequired;
     }
 
+    @Transient
     public boolean isVoid(){
         return orderId == null;
     }
