@@ -7,8 +7,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @AllArgsConstructor
 @Service
 public class SushiService {
@@ -17,16 +15,10 @@ public class SushiService {
 
     @Cacheable(value = "sushi", key = "#name", unless = "#result == null")
     public Sushi getSushiByName(String name) {
-        List<Sushi> sushiList = sushiRepository.findByName(name);
-        if (sushiList.isEmpty()) {
+        Sushi sushi = sushiRepository.findTopByName(name);
+        if (sushi == null) {
             throw new EntityNotFoundException("Sushi not found");
         }
-        return sushiList.get(0);
+        return sushi;
     }
-
-    /*@Cacheable(value = "sushi", key = "#id", unless = "#result == null")
-    public Sushi getSushiById(Integer id) {
-        return sushiRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException("Sushi not found"));
-    }*/
 }

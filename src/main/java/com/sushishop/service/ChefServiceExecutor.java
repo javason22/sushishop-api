@@ -31,8 +31,6 @@ public class ChefServiceExecutor {
 
     private final List<ScheduledFuture<?>> makeSushiTasks = new ArrayList<>(Constant.MAX_CHEF);
 
-    //private final List<AtomicBoolean> isMakingSushi = new ArrayList<>(Constant.MAX_CHEF);
-
     private final QueueService queueService;
 
     private final SushiOrderRepository sushiOrderRepository;
@@ -67,7 +65,6 @@ public class ChefServiceExecutor {
                         }
                         log.info("Chef {} is taking order {}", index, order.getOrderId());
                         order.setLastUpdatedAt(Instant.now().toEpochMilli());
-                        //chef.setOrder(order);
                         queueService.putOrderToProcessing(index, order); // put order to the processing queue
                         updateOrderStatus(order.getOrderId(), StatusType.IN_PROGRESS.getStatus());
                         chef.setWorking(true);
@@ -82,7 +79,6 @@ public class ChefServiceExecutor {
                             return;
                         }
                         chef.process(order);
-                        //ChefOrder order = chef.getOrder();
                         log.info("Order {} progress: {}/{}", order.getOrderId(), order.getProgress(), order.getTimeRequired());
                         // if order is completed, remove from processing queue
                         if (order.finish()) {
@@ -118,7 +114,7 @@ public class ChefServiceExecutor {
     @Getter
     @Setter
     @AllArgsConstructor
-    public class Chef{
+    public static class Chef{
 
         private int id;
 

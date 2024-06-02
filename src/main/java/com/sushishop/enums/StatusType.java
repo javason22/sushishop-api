@@ -11,8 +11,8 @@ public enum StatusType {
     FINISHED("finished", Constant.CACHE_FINISHED_ORDERS),
     CANCELLED("cancelled", Constant.CACHE_CANCELLED_ORDERS);
 
-    String status;
-    String queueName;
+    final String status;
+    final String queueName;
 
     StatusType(String status, String queueName) {
         this.status = status;

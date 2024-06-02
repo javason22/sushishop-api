@@ -36,7 +36,7 @@ public class SushiOrder implements Serializable {
     @JoinColumn(name = "sushi_id", referencedColumnName = "id", nullable = false)
     private Sushi sushi;
 
-    @Column(name = "createdat", nullable = false, columnDefinition = "timestamp default current_timestamp")
+    @Column(name = "createdAt", nullable = false, columnDefinition = "timestamp default current_timestamp")
     @JsonFormat(shape = JsonFormat.Shape.NUMBER_INT)
     private Timestamp createdAt;
 

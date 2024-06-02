@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
-import org.springframework.data.redis.connection.RedisServer;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Executors;
@@ -22,12 +21,10 @@ public class AppInitializer implements ApplicationRunner {
     private final ChefServiceExecutor chefService;
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
 
         log.info("========= Sushi Shop started to take orders! =========");
-        scheduler.schedule(() -> {
-            chefService.run();
-        }, 100, TimeUnit.MILLISECONDS);
+        scheduler.schedule(chefService::run, 100, TimeUnit.MILLISECONDS);
         log.info("========= Sushi Shop finished taking orders! =========");
     }
 }

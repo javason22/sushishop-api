@@ -1,6 +1,5 @@
 package com.sushishop.controller;
 
-import com.sushishop.Constant;
 import com.sushishop.entity.SushiOrder;
 import com.sushishop.enums.StatusType;
 import com.sushishop.pojo.ChefOrder;
@@ -9,7 +8,6 @@ import com.sushishop.response.BaseResponse;
 import com.sushishop.response.OrderResponse;
 import com.sushishop.response.OrderStatusResponse;
 import com.sushishop.service.OrderService;
-import com.sushishop.service.StatusService;
 import com.sushishop.service.SushiService;
 import com.sushishop.entity.Sushi;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +20,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,8 +32,6 @@ public class OrderController {
     private final SushiService sushiService;
 
     private final OrderService orderService;
-
-    private final StatusService statusService;
 
     @Operation(summary = "Create order")
     @Parameters({

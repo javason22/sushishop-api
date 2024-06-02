@@ -1,11 +1,9 @@
 package com.sushishop.repository;
 
-import java.util.List;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import com.sushishop.entity.Sushi;;
+import com.sushishop.entity.Sushi;
 
 @Repository
 public interface SushiRepository extends JpaRepository<Sushi, Integer>{
@@ -13,8 +11,8 @@ public interface SushiRepository extends JpaRepository<Sushi, Integer>{
     /**
      * Find sushi by name
      *
-     * @param name
-     * @return
+     * @param name sushi name
+     * @return Sushi with the given name
      */
-    List<Sushi> findByName(String name);
+    Sushi findTopByName(String name);
 }

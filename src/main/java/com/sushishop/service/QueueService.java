@@ -25,7 +25,7 @@ public class QueueService {
 
 
     /**
-     * push order to pending queue
+     * push order to the pending queue
      *
      * @param orderId order id
      * @param timeRequired time required to finish the order (in seconds)
@@ -48,16 +48,17 @@ public class QueueService {
         return order;
     }
 
-    public Long removeOrderFromPending(Long orderId) {
-        Long result = redisTemplate.opsForList().remove(Constant.CACHE_PENDING_ORDERS, 1,
+    public void removeOrderFromPending(Long orderId) {
+        redisTemplate.opsForList().remove(Constant.CACHE_PENDING_ORDERS, 1,
                 ChefOrder.builder().orderId(orderId).build());
         log.info("Remove order from pending-order: {}", orderId);
         log.info("pending-orders after remove {}", redisTemplate.opsForList().range(Constant.CACHE_PENDING_ORDERS, 0, -1));
-        return result;
     }
 
     public void putOrderToProcessing(int index, ChefOrder order) {
-        if(index >= redisTemplate.opsForList().size(Constant.CACHE_PROCESSING_ORDERS)) {
+        Long size = redisTemplate.opsForList().size(Constant.CACHE_PROCESSING_ORDERS);
+        assert size != null : "Processing orders is null";
+        if(index >= size) {
             throw new RuntimeException("Too many orders in processing");
         }
         redisTemplate.opsForList().set(Constant.CACHE_PROCESSING_ORDERS, index, order);
@@ -68,28 +69,26 @@ public class QueueService {
     public ChefOrder getOrderFromProcessing(int index) {
 
         ChefOrder order = (ChefOrder)redisTemplate.opsForList().index(Constant.CACHE_PROCESSING_ORDERS, index);
-        log.info("Get order from processing-order: {}", order);
-        log.info("processing-orders after get order {}", redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1));
+        log.info("processing-orders after get order : {} is {}", order, redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1));
         return order;
     }
 
     public void removeOrderFromProcessing(Long orderId) {
-        //long index = redisTemplate.opsForList().indexOf(Constant.CACHE_PROCESSING_ORDERS,
-        //        ChefOrder.builder().orderId(orderId).build());
         List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1);
+        assert orders != null : "Processing orders is null";
         long index = orders.indexOf(ChefOrder.builder().orderId(orderId).build());
         if(index < 0){
             log.error("Order {} not found in processing", orderId);
             return;
         }
         redisTemplate.opsForList().set(Constant.CACHE_PROCESSING_ORDERS, index, ChefOrder.builder().build()); // reset the order
-        log.info("Remove order from processing-order: {}", orderId);
-        log.info("processing-orders after remove {}", redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1));
+        log.info("processing-orders after removing order ID: {} is {}", orderId, redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1));
     }
 
     public ChefOrder getOrderFromProcessing(Long orderId, boolean remove) {
-        ChefOrder order = (ChefOrder)redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1)
-                .stream().filter(o -> ((ChefOrder)o).getOrderId().equals(orderId)).findFirst().orElse(null);
+        List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1);
+        assert orders != null : "Processing orders is null";
+        ChefOrder order = (ChefOrder) orders.stream().filter(o -> ((ChefOrder)o).getOrderId().equals(orderId)).findFirst().orElse(null);
         if(remove) {
             removeOrderFromProcessing(orderId);
         }
@@ -143,13 +142,15 @@ public class QueueService {
     }
 
     public List<ChefOrder> getPendingOrders() {
-        return redisTemplate.opsForList().range(Constant.CACHE_PENDING_ORDERS, 0, -1)
-                .stream().map(o -> (ChefOrder)o).toList();
+        List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_PENDING_ORDERS, 0, -1);
+        assert orders != null : "Pending orders is null";
+        return orders.stream().map(o -> (ChefOrder)o).toList();
     }
 
     public List<ChefOrder> getProcessingOrders() {
-        return redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1)
-                .stream().map(o -> (ChefOrder)o).toList();
+        List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_PROCESSING_ORDERS, 0, -1);
+        assert orders != null : "Processing orders is null";
+        return orders.stream().map(o -> (ChefOrder)o).toList();
     }
 
     public List<ChefOrder> getPausingOrders() {
@@ -158,13 +159,15 @@ public class QueueService {
     }
 
     public List<ChefOrder> getFinishedOrders() {
-        return redisTemplate.opsForList().range(Constant.CACHE_FINISHED_ORDERS, 0, -1)
-                .stream().map(o -> (ChefOrder)o).toList();
+        List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_FINISHED_ORDERS, 0, -1);
+        assert orders != null : "Finished orders is null";
+        return orders.stream().map(o -> (ChefOrder)o).toList();
     }
 
     public List<ChefOrder> getCancelledOrders() {
-        return redisTemplate.opsForList().range(Constant.CACHE_CANCELLED_ORDERS, 0, -1)
-                .stream().map(o -> (ChefOrder)o).toList();
+        List<Object> orders = redisTemplate.opsForList().range(Constant.CACHE_CANCELLED_ORDERS, 0, -1);
+        assert orders != null : "Cancelled orders is null";
+        return orders.stream().map(o -> (ChefOrder)o).toList();
     }
 
     public void pushOrderToFinished(ChefOrder order) {

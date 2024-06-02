@@ -1,22 +1,20 @@
 package com.sushishop.service;
 
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.sushishop.entity.Status;
 import com.sushishop.enums.StatusType;
 import com.sushishop.pojo.ChefOrder;
-import com.sushishop.response.OrderStatusResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import com.sushishop.Constant;
 import com.sushishop.entity.Sushi;
 import com.sushishop.entity.SushiOrder;
 import com.sushishop.repository.SushiOrderRepository;
@@ -65,7 +63,8 @@ public class OrderService {
             throw new EntityNotFoundException("Order not found");
         }
         // check if order is already cancelled
-        switch (StatusType.getFromString(order.getStatus().getName())) {
+        StatusType statusType = StatusType.getFromString(order.getStatus().getName());
+        switch (Objects.requireNonNull(statusType)) {
             case CANCELLED, FINISHED:
                 return false;
             case CREATED:
@@ -88,7 +87,7 @@ public class OrderService {
     public List<ChefOrder> listChefOrders(){
         // get orders
         List<ChefOrder> pendingOrders = queueService.getPendingOrders();
-        List<ChefOrder> processingOrders = queueService.getProcessingOrders().stream().filter(o -> !o.isVoid()).collect(Collectors.toList());
+        List<ChefOrder> processingOrders = queueService.getProcessingOrders().stream().filter(o -> !o.isVoid()).toList();
         List<ChefOrder> pausedOrders = queueService.getPausingOrders();
         List<ChefOrder> finishedOrders = queueService.getFinishedOrders();
         List<ChefOrder> cancelledOrders = queueService.getCancelledOrders();
@@ -99,14 +98,13 @@ public class OrderService {
         finishedOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.FINISHED.getStatus())));
         cancelledOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.CANCELLED.getStatus())));
 
-        List<ChefOrder> chefOrders = List.of(pendingOrders, processingOrders, pausedOrders, finishedOrders, cancelledOrders)
-                .stream().flatMap(List::stream).collect(Collectors.toList());
-        return chefOrders;
+        return Stream.of(pendingOrders, processingOrders, pausedOrders, finishedOrders, cancelledOrders)
+                .flatMap(List::stream).collect(Collectors.toList());
     }
 
     @Transactional
     public boolean pauseOrder(long orderId){
-        SushiOrder order = this.getOrder(orderId);
+        SushiOrder order = getOrder(orderId);
         if(StatusType.IN_PROGRESS != StatusType.getFromString(order.getStatus().getName())){
             log.info("Cannot pause Order ID {} which is not in progress", orderId);
             return false;
@@ -122,7 +120,7 @@ public class OrderService {
 
     @Transactional
     public boolean resumeOrder(long orderId){
-        SushiOrder order = this.getOrder(orderId);
+        SushiOrder order = getOrder(orderId);
         if(StatusType.PAUSED != StatusType.getFromString(order.getStatus().getName())){
             log.info("Cannot resume Order ID {} which is not paused", orderId);
             return false;
