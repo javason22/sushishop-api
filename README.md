@@ -5,7 +5,7 @@ This is a RESTful API for a Sushi ordering system built with Spring Boot. It pro
 
 ## Getting Started
 ### Prerequisites
-Java 11 or higher
+Java 17 or higher
 Maven
 ## Installation
 Clone the repository
@@ -36,7 +36,6 @@ http://localhost:9000/api/orders/status
 Spring Boot - The web framework used  
 Maven - Dependency Management  
 H2 Database - In-memory database  
-Hazelcast - In-memory data grid  
-jackson-databind - POJO - Json conversion  
+Embedded Redis - In-memory data structure store  
 ### License
 This project is licensed under the MIT License - see the LICENSE.md file for details.
