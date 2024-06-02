@@ -23,7 +23,7 @@ public class ChefOrder implements Serializable {
 
     private Long orderId; // order id
 
-    private Long startAt; // time when order was taken by chef
+    private Long lastUpdatedAt; // last updated time
 
     private Long timeRequired; // time required to finish the sushi
 

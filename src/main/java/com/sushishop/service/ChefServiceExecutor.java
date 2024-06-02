@@ -8,13 +8,11 @@ import com.sushishop.repository.SushiOrderRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -23,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Component
@@ -69,7 +66,7 @@ public class ChefServiceExecutor {
                             return;
                         }
                         log.info("Chef {} is taking order {}", index, order.getOrderId());
-                        order.setStartAt(Instant.now().toEpochMilli());
+                        order.setLastUpdatedAt(Instant.now().toEpochMilli());
                         //chef.setOrder(order);
                         queueService.putOrderToProcessing(index, order); // put order to the processing queue
                         updateOrderStatus(order.getOrderId(), StatusType.IN_PROGRESS.getStatus());
@@ -132,20 +129,10 @@ public class ChefServiceExecutor {
             if(order != null){
                 log.info("Chef {} is making sushi: {}", id, order.getOrderId());
                 long now = Instant.now().toEpochMilli();
-                order.setProgress(order.getProgress() + now - order.getStartAt());
+                order.setProgress(order.getProgress() + now - order.getLastUpdatedAt());
+                order.setLastUpdatedAt(now);
                 log.info("Chef {} order progress: {}/{}", id, order.getProgress(), order.getTimeRequired());
             }
         }
-
-        /*public boolean finish(){
-            if(order != null){
-                return order.getProgress() >= order.getTimeRequired();
-            }
-            return true;
-        }*/
-
-        /*public boolean isWorking(){
-            return order != null;
-        }*/
     }
 }

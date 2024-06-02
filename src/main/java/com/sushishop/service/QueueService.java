@@ -2,7 +2,6 @@ package com.sushishop.service;
 
 import com.sushishop.Constant;
 import com.sushishop.pojo.ChefOrder;
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,7 +34,7 @@ public class QueueService {
         ChefOrder sOrder = ChefOrder.builder()
                 .orderId(orderId)
                 .progress(0L)
-                .startAt(0L)
+                .lastUpdatedAt(0L)
                 .timeRequired(timeRequired * 1000L).build();
         pushToList(Constant.CACHE_PENDING_ORDERS, sOrder);
     }
@@ -135,7 +134,7 @@ public class QueueService {
             log.error("Order {} not found in pausing", orderId);
             return false;
         }
-        orderFromPausing.setStartAt(Instant.now().toEpochMilli()); // reset start time
+        orderFromPausing.setLastUpdatedAt(Instant.now().toEpochMilli()); // reset start time
         // inject order to the beginning of the queue
         redisTemplate.opsForList().rightPush(Constant.CACHE_PENDING_ORDERS, orderFromPausing);
         log.info("Move order from pausing to pending: {}", orderFromPausing);
