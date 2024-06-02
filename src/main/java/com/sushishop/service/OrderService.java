@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.sushishop.entity.Status;
+import com.sushishop.enums.StatusType;
 import com.sushishop.pojo.ChefOrder;
 import com.sushishop.response.OrderStatusResponse;
 import jakarta.persistence.EntityNotFoundException;
@@ -45,7 +46,7 @@ public class OrderService {
     public SushiOrder createOrder(String sushiName) {
         Sushi sushi = sushiService.getSushiByName(sushiName);
         
-        Status createdStatus = statusService.findByName(Constant.STATUS_CREATED);
+        Status createdStatus = statusService.findByName(StatusType.CREATED.getStatus());
         assert createdStatus != null; // created status should be available
         SushiOrder order = SushiOrder.builder()
                 .sushi(sushi)
@@ -64,21 +65,22 @@ public class OrderService {
             throw new EntityNotFoundException("Order not found");
         }
         // check if order is already cancelled
-        switch (order.getStatus().getName()) {
-            case Constant.STATUS_CANCELLED, Constant.STATUS_FINISHED:
+        switch (StatusType.getFromString(order.getStatus().getName())) {
+            case CANCELLED, FINISHED:
                 return false;
-            case Constant.STATUS_CREATED:
+            case CREATED:
                 queueService.moveOrderFromPendingToCancel(orderId);
-            case Constant.STATUS_IN_PROGRESS:
+            case IN_PROGRESS:
                 queueService.moveOrderFromProcessingToCancel(orderId);
-            case Constant.STATUS_PAUSED:
+            case PAUSED:
                 queueService.moveOrderFromPausingToCancel(orderId);
         }
-        if(statusService.findByName(Constant.STATUS_CANCELLED).equals(order.getStatus())){
+        if(StatusType.CANCELLED == StatusType.getFromString(order.getStatus().getName())){
             log.warn("Order ID {} is already cancelled", orderId);
             return false;
         }
-        order.setStatus(statusService.findByName(Constant.STATUS_CANCELLED));
+
+        order.setStatus(statusService.findByName(StatusType.CANCELLED.getStatus()));
         orderRepository.save(order);
         return true;
     }
@@ -91,11 +93,11 @@ public class OrderService {
         List<ChefOrder> finishedOrders = queueService.getFinishedOrders();
         List<ChefOrder> cancelledOrders = queueService.getCancelledOrders();
 
-        pendingOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_CREATED)));
-        processingOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_IN_PROGRESS)));
-        pausedOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_PAUSED)));
-        finishedOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_FINISHED)));
-        cancelledOrders.forEach(o -> o.setStatus(statusService.findByName(Constant.STATUS_CANCELLED)));
+        pendingOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.CREATED.getStatus())));
+        processingOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.IN_PROGRESS.getStatus())));
+        pausedOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.PAUSED.getStatus())));
+        finishedOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.FINISHED.getStatus())));
+        cancelledOrders.forEach(o -> o.setStatus(statusService.findByName(StatusType.CANCELLED.getStatus())));
 
         List<ChefOrder> chefOrders = List.of(pendingOrders, processingOrders, pausedOrders, finishedOrders, cancelledOrders)
                 .stream().flatMap(List::stream).collect(Collectors.toList());
@@ -105,7 +107,7 @@ public class OrderService {
     @Transactional
     public boolean pauseOrder(long orderId){
         SushiOrder order = this.getOrder(orderId);
-        if(!statusService.findByName(Constant.STATUS_IN_PROGRESS).equals(order.getStatus())){
+        if(StatusType.IN_PROGRESS != StatusType.getFromString(order.getStatus().getName())){
             log.info("Cannot pause Order ID {} which is not in progress", orderId);
             return false;
         }
@@ -113,7 +115,7 @@ public class OrderService {
             log.error("Failed to move Order ID {} from processing to pausing", orderId);
             return false;
         }
-        order.setStatus(statusService.findByName(Constant.STATUS_PAUSED));
+        order.setStatus(statusService.findByName(StatusType.PAUSED.getStatus()));
         orderRepository.save(order);
         return true;
     }
@@ -121,7 +123,7 @@ public class OrderService {
     @Transactional
     public boolean resumeOrder(long orderId){
         SushiOrder order = this.getOrder(orderId);
-        if(!statusService.findByName(Constant.STATUS_PAUSED).equals(order.getStatus())){
+        if(StatusType.PAUSED != StatusType.getFromString(order.getStatus().getName())){
             log.info("Cannot resume Order ID {} which is not paused", orderId);
             return false;
         }
@@ -129,8 +131,7 @@ public class OrderService {
             log.error("Failed to move Order ID {} from pausing to processing", orderId);
             return false;
         }
-        order.setStatus(statusService.findByName(Constant.STATUS_IN_PROGRESS));
-        orderRepository.save(order);
+        // do not update status, keep it paused until it is picked up by a chef
         return true;
     }
 }

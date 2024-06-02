@@ -2,6 +2,7 @@ package com.sushishop.controller;
 
 import com.sushishop.Constant;
 import com.sushishop.entity.SushiOrder;
+import com.sushishop.enums.StatusType;
 import com.sushishop.pojo.ChefOrder;
 import com.sushishop.request.OrderRequest;
 import com.sushishop.response.BaseResponse;
@@ -97,20 +98,8 @@ public class OrderController {
                                 .timeSpent(order.getProgress() != null ? order.getProgress() / 1000 : 0)  // calculate time spent
                                         .build(), Collectors.toList())));
         // add missing status
-        if(!orderMap.containsKey(Constant.STATUS_CREATED)){
-            orderMap.put(Constant.STATUS_CREATED, List.of());
-        }
-        if(!orderMap.containsKey(Constant.STATUS_IN_PROGRESS)){
-            orderMap.put(Constant.STATUS_IN_PROGRESS, List.of());
-        }
-        if(!orderMap.containsKey(Constant.STATUS_FINISHED)){
-            orderMap.put(Constant.STATUS_FINISHED, List.of());
-        }
-        if(!orderMap.containsKey(Constant.STATUS_PAUSED)){
-            orderMap.put(Constant.STATUS_PAUSED, List.of());
-        }
-        if(!orderMap.containsKey(Constant.STATUS_CANCELLED)){
-            orderMap.put(Constant.STATUS_CANCELLED, List.of());
+        for(StatusType statusType :StatusType.values()) {
+            orderMap.putIfAbsent(statusType.getStatus(), List.of());
         }
         // return order response
         return ResponseEntity.ok(orderMap);

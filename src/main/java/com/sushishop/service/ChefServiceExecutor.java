@@ -2,6 +2,7 @@ package com.sushishop.service;
 
 import com.sushishop.Constant;
 import com.sushishop.entity.SushiOrder;
+import com.sushishop.enums.StatusType;
 import com.sushishop.pojo.ChefOrder;
 import com.sushishop.repository.SushiOrderRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -71,7 +72,7 @@ public class ChefServiceExecutor {
                         order.setStartAt(Instant.now().toEpochMilli());
                         //chef.setOrder(order);
                         queueService.putOrderToProcessing(index, order); // put order to the processing queue
-                        updateOrderStatus(order.getOrderId(), Constant.STATUS_IN_PROGRESS);
+                        updateOrderStatus(order.getOrderId(), StatusType.IN_PROGRESS.getStatus());
                         chef.setWorking(true);
                         log.info("Chef {} start to make sushi {}", index, order.getOrderId());
                     } else {
@@ -88,7 +89,7 @@ public class ChefServiceExecutor {
                         log.info("Order {} progress: {}/{}", order.getOrderId(), order.getProgress(), order.getTimeRequired());
                         // if order is completed, remove from processing queue
                         if (order.finish()) {
-                            updateOrderStatus(order.getOrderId(), Constant.STATUS_FINISHED);
+                            updateOrderStatus(order.getOrderId(), StatusType.FINISHED.getStatus());
                             queueService.pushOrderToFinished(order); // push order to finished queue
                             queueService.putOrderToProcessing(index, ChefOrder.builder().build()); // reset order
                             //chef.setOrder(null);
@@ -131,7 +132,7 @@ public class ChefServiceExecutor {
             if(order != null){
                 log.info("Chef {} is making sushi: {}", id, order.getOrderId());
                 long now = Instant.now().toEpochMilli();
-                order.setProgress(now - order.getStartAt());
+                order.setProgress(order.getProgress() + now - order.getStartAt());
                 log.info("Chef {} order progress: {}/{}", id, order.getProgress(), order.getTimeRequired());
             }
         }
